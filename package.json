@@ -1,0 +1,8 @@
+{
+  "name":"dust-operations-online",
+  "private":true,
+  "version":"10.0.0",
+  "description":"Dust Operations feature-preserving authoritative multiplayer backend",
+  "scripts":{"start":"node server.js"},
+  "dependencies":{"ws":"^8.18.0"}
+}

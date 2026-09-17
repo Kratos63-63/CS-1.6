@@ -1,0 +1,29 @@
+DUST OPERATIONS V12 - CLOUDFLARE DEPLOY
+=======================================
+
+Bu paket mevcut V12 oyun dosyalarını silmeden korunmuştur.
+Multiplayer backend: server/worker.js
+Cloudflare config: wrangler.toml
+
+ONEMLI:
+Cloudflare'da "Upload your static files" ekranini kullanma.
+Bu proje Durable Objects kullandigi icin Wrangler ile deploy edilmelidir.
+
+DEPLOY KOMUTLARI (PC/terminal veya GitHub Actions):
+  npm install
+  npx wrangler login
+  npx wrangler deploy
+
+Deploy sonrasi Worker adresi:
+  https://<worker-adiniz>.<hesap-subdomaininiz>.workers.dev
+
+Oyun ayni Worker uzerinden yayinlanirsa network.js otomatik olarak:
+  wss://<worker-adresi>/ws
+endpoint'ini kullanir.
+
+Eger oyun baska bir sitede yayinlaniyorsa URL'ye ?ws=wss://<worker-adresi>/ws
+eklenebilir veya window.DUST_MULTIPLAYER_URL ayarlanabilir.
+
+OYUNCULAR:
+Oyuncular Termux/npm/server kurmaz. Bunlar sadece backend'i bir kez deploy etmek
+icin kullanilir. Son kullanicilar normal web sayfasini acip oda koduyla baglanir.
