@@ -1,31 +1,26 @@
-DUST OPERATIONS v12
-====================
+DUST OPERATIONS — MULTIPLAYER FIX
+================================
 
-Bu sürüm v10'un mevcut oyun içeriğini korur ve multiplayer akışını değiştirir.
+Bu paket mevcut v12 oyun içeriğini korur ve multiplayer tarafındaki fizik/oyuncu senkron sorunlarını düzeltir.
 
-MULTIPLAYER AKIŞI
-- MULTIPLAYER > ODA KUR: oda oluşturulur ve maç HEMEN başlar.
-- Oda kodu ekranda görünür.
-- Başka oyuncu aynı kodu girerse mevcut devam eden maça doğrudan girer.
-- Host'un ayrıca "Yeni Oyun" butonuna basması gerekmez.
+DÜZELTİLENLER
+- Server-authoritative duvar çarpışması: oyuncu duvarların içinden geçemez.
+- Server-authoritative kasa/engel çarpışması: kutuların içinden geçilemez ve mermiler kutunun içinden devam etmez.
+- Zıplama + yerçekimi server tarafında doğrulanır.
+- Reload sırasında ateş server ve client tarafında kilitlenir. Reload süresi bitince mühimmat doldurulur.
+- Multiplayer ekranında T / CT takım seçimi vardır. Katılan oyuncunun seçtiği takım server tarafından korunur.
+- Host bir oyuncunun takımını diğer oyunculara yanlışlıkla aktaramaz; her oyuncunun kendi takımı snapshot/start mesajında korunur.
+- WebSocket endpoint aynı oyunun /ws adresini kullanır.
+- Silah sesleri daha katmanlı ve güçlü transient/bass/tail yapısıyla yeniden işlendi.
 
-VERİ PAYLAŞIMI / SERVER OTORİTESİ
-- Oyuncu inputları sunucuya gönderilir.
-- Oyuncu konumu, bakışı, takım, silah, can, kill/death ve alive durumu server state'inde tutulur.
-- Sunucu periyodik snapshot yayınlar.
-- Ateş hızı, şarjör ve silah seçimi server tarafından doğrulanır.
-- Hasar ve ölüm server tarafından hesaplanır.
-- Respawn server tarafından yapılır ve tüm oyunculara yayınlanır.
-- Dost ateşi kapalıdır.
+CLOUDFLARE
+- worker.js kökte bulunur.
+- wrangler.toml main = "worker.js" olarak ayarlanmıştır.
+- Worker adı cs-1-6 ile eşleştirilmiştir.
+- Durable Object binding: ROOMS -> Room.
+- Oyuncular Termux/npm/server çalıştırmaz; backend Cloudflare üzerinde çalışır.
 
-DOSYALAR
-- index.html: oyun + oda arayüzü
-- dust-map.js: mevcut harita
-- dust-game.js: mevcut oyun mekanikleri
-- network.js: websocket istemcisi
-- server/worker.js: Cloudflare Worker + Durable Object backend
-- server.js: yerel Node/WebSocket backend
-- audio/: mevcut sesler
-
-NOT
-Tarayıcıdaki oyuncular Termux/npm/server kurmaz. İnternet multiplayer için Worker backend'in bir kez web'e deploy edilmiş olması gerekir. Paket içindeki /ws endpoint'i bu backend için hazırlanmıştır.
+DEPLOY
+- GitHub reposuna paket içeriğini koy.
+- Cloudflare Workers Builds için build/deploy komutu: npx wrangler deploy
+- Deploy edilen /ws adresi oyun tarafından otomatik kullanılır.

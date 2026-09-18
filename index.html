@@ -584,6 +584,7 @@ try {
 
   const game = createDustGame({ THREE, scene, camera, dust });
   const network = new LocalRoomNetwork({ THREE, scene, status });
+  let jumpRequested = false;
   function applyRoomConfig(cfg){
     if(!cfg) return;
     for(const [id,value] of [["team",cfg.team],["botCount",cfg.botCount],["difficulty",cfg.difficulty],["primary",cfg.primary]]){
@@ -593,6 +594,7 @@ try {
   network.onRoom = ({config}) => applyRoomConfig(config);
   network.onConfig = applyRoomConfig;
   network.onSnapshot = state => game.applyAuthoritativeSnapshot(state);
+  network.onReloadStart = msg => { if (msg?.duration) game.startAuthoritativeReload(msg.duration); };
   network.onCombat = msg => {
     game.applyAuthoritativeCombat(msg);
     const w=msg?.weapon||"ak";
@@ -671,6 +673,7 @@ try {
     moveX = moveY = 0;
     stickPointer = lookPointer = null;
     holdingFire = false;
+    jumpRequested = false;
     knob.style.transform = "translate(0px,0px)";
   }
 
@@ -727,11 +730,11 @@ try {
   scopeButton.addEventListener("pointerdown", e=>{e.preventDefault();e.stopPropagation();if(playing)setScope(!scopeActive);});
   jumpButton.addEventListener("pointerdown", e=>{
     e.preventDefault(); e.stopPropagation();
-    if(playing && game.canMove() && grounded){ verticalVelocity=6.2; grounded=false; playSound("jump",.65); }
+    if(playing && game.canMove() && grounded){ verticalVelocity=6.2; grounded=false; jumpRequested=true; playSound("jump",.65); }
   });
 
   function doJump(){
-    if(playing && game.canMove() && grounded){ verticalVelocity=6.2; grounded=false; playSound("jump",.65); }
+    if(playing && game.canMove() && grounded){ verticalVelocity=6.2; grounded=false; jumpRequested=true; playSound("jump",.65); }
   }
 
   function ladderNearby(){
@@ -796,9 +799,12 @@ try {
   // Oda tabanlı multiplayer. Host başlatınca tüm istemciler aynı config ile oyuna girer.
   const multiPanel=document.getElementById("multiPanel");
   const roomInfo=document.getElementById("roomInfo");
-  document.getElementById("multiplayerBtn").onclick=()=>multiPanel.style.display="flex";
+  document.getElementById("multiplayerBtn").onclick=()=>{multiPanel.style.display="flex";document.getElementById("multiTeam").value=document.getElementById("team").value;};
   document.getElementById("closeMulti").onclick=()=>multiPanel.style.display="none";
   function currentConfig(){
+    const teamEl=document.getElementById("team");
+    const multiTeamEl=document.getElementById("multiTeam");
+    if(multiPanel.style.display!=="none" && multiTeamEl) teamEl.value=multiTeamEl.value;
     const n=Math.max(0,Math.min(64,Number(document.getElementById("botCount").value)||0));
     document.getElementById("botCount").value=n;
     return {team:document.getElementById("team").value,botCount:n,difficulty:document.getElementById("difficulty").value,primary:document.getElementById("primary").value};
@@ -824,7 +830,7 @@ try {
     playSound(w==="awp"||w==="scout"?"sniper-shot":w==="xm1014"?"shotgun-shot":(w==="deagle"||w==="pistol")?"pistol-shot":"rifle-shot", .55);
     game.receiveRemoteShot(shot); if(shot?.ox!==undefined){ const from=new THREE.Vector3(shot.ox,shot.oy,shot.oz),to=from.clone().add(new THREE.Vector3(shot.dx,shot.dy,shot.dz).multiplyScalar(Math.min(shot.range||80,45))); const line=new THREE.Line(new THREE.BufferGeometry().setFromPoints([from,to]),new THREE.LineBasicMaterial({color:0xffc46b,transparent:true,opacity:.45})); scene.add(line); setTimeout(()=>{scene.remove(line);line.geometry.dispose();line.material.dispose();},55); } };
   document.getElementById("createRoom").onclick=async()=>{ if(!(await ensureNetwork()))return; const cfg=currentConfig(); roomInfo.textContent="Oda kuruluyor…"; await network.createRoom(cfg); };
-  document.getElementById("joinRoom").onclick=async()=>{ if(!(await ensureNetwork()))return; const code=document.getElementById("roomCode").value.trim().toUpperCase(); if(!/^[A-Z0-9]{6}$/.test(code)){roomInfo.textContent="6 haneli oda kodunu gir.";return;} roomInfo.textContent="Odaya bağlanılıyor…"; await network.joinRoom(code); };
+  document.getElementById("joinRoom").onclick=async()=>{ if(!(await ensureNetwork()))return; const code=document.getElementById("roomCode").value.trim().toUpperCase(); if(!/^[A-Z0-9]{6}$/.test(code)){roomInfo.textContent="6 haneli oda kodunu gir.";return;} const team=document.getElementById("multiTeam").value; document.getElementById("team").value=team; roomInfo.textContent="Odaya bağlanılıyor…"; await network.joinRoom(code,team); };
   document.getElementById("copyRoom").onclick=async()=>{try{await navigator.clipboard.writeText(document.getElementById("roomCode").value);roomInfo.textContent="Oda kodu kopyalandı.";}catch{}};
 
   startButton.disabled = false;
@@ -1073,8 +1079,9 @@ try {
         forward: ( -moveY + Number(keys.has("KeyW") || keys.has("ArrowUp")) - Number(keys.has("KeyS") || keys.has("ArrowDown")) ),
         side: ( moveX + Number(keys.has("KeyD") || keys.has("ArrowRight")) - Number(keys.has("KeyA") || keys.has("ArrowLeft")) ),
         run: running || keys.has("ShiftLeft") || keys.has("ShiftRight"),
-        yaw, pitch, fire: holdingFire, weapon: game.getCurrentWeapon()
+        yaw, pitch, fire: holdingFire && !game.isReloading(), weapon: game.getCurrentWeapon(), jump: jumpRequested
       });
+      jumpRequested = false;
     }
 
     renderer.render(scene, camera);
@@ -1092,6 +1099,8 @@ try {
   <div id="multiPanel">
     <div class="modal">
       <h2>ÇEVRİM İÇİ ODA</h2>
+      <label for="multiTeam">TAKIMINI SEÇ</label>
+      <select id="multiTeam"><option value="T">TERÖRİST — T</option><option value="CT">ANTI TERÖRİST — CT</option></select>
       <label>ODA KODU</label>
       <input id="roomCode" placeholder="Örn. A1B2C3" maxlength="6" autocomplete="off">
       <div id="roomInfo" style="color:#d6dfc1;font-size:12px;margin:8px 0">Oda kur veya mevcut odaya katıl.</div>

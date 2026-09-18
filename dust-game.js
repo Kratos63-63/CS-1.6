@@ -1139,6 +1139,15 @@ export function createDustGame({ THREE, scene, camera, dust }) {
     return inventory[selected]?.id || "ak";
   }
 
+  function isReloading() {
+    return reloadRemaining > 0;
+  }
+
+  function startAuthoritativeReload(duration) {
+    const seconds = Math.max(0, Number(duration) || 0);
+    if (seconds > 0) reloadRemaining = Math.max(reloadRemaining, seconds);
+  }
+
   // Ağdaki başka bir oyuncunun ateşini yerel harita ve hitbox üzerinde doğrula.
   // Sunucu yalnızca olayı taşır; duvar ve isabet hesabı istemcide gerçek oyun
   // geometrisi üzerinden yapılır.
@@ -1231,7 +1240,7 @@ export function createDustGame({ THREE, scene, camera, dust }) {
 
   return {
     start, update, canMove, reload, cycleWeapon, setWeapon,
-    setEventHandler, setScope, getCurrentWeapon, getNetworkState, receiveRemoteShot,
+    setEventHandler, setScope, getCurrentWeapon, isReloading, startAuthoritativeReload, getNetworkState, receiveRemoteShot,
     setMultiplayer, applyAuthoritativeSnapshot, applyAuthoritativeCombat
   };
 }
