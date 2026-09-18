@@ -1,0 +1,18 @@
+DUST OPERATIONS — VIDEO FIX
+
+Video incelemesinde görülen sorun:
+- Duvarların dibinde bazı açılarda beige zemin yerine gökyüzü/arka plan görünüyordu.
+- Bu özellikle oyuncu duvara çok yaklaşınca belirginleşiyordu.
+- Cloudflare Worker sürümünde T başlangıç noktası da eski harita grid'inde geçerli olmayan bir konuma ayarlıydı.
+
+Yapılan düzeltmeler:
+1) dust-map.js
+   - Haritanın altında 160x160 görsel alt zemin eklendi.
+   - Bu zemin sadece boşluklarda arka plan görünmesini engeller.
+   - Oynanabilir alanı büyütmez; mevcut grid/collider sınırları korunur.
+2) worker.js
+   - T takımının başlangıcı (-20, 32) yerine mevcut grid içindeki güvenli koridora (-40, 20) taşındı.
+3) index.html
+   - dust-map.js cache sürümü v7 yapıldı.
+
+Video: 219900.mp4

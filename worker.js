@@ -142,7 +142,9 @@ export class Room{
  assign(r,p,preferred=p.preferredTeam){
    const team=preferred==='CT'?'CT':'T';
    p.team=team;p.preferredTeam=team;p.slot=r.nextSlot++;
-   const b=team==='T'?{x:-20,z:32,yaw:0}:{x:4,z:-40,yaw:Math.PI};
+   // T başlangıcı eski sürümde haritanın boş bir hücresine düşüyordu.
+   // Geçerli Dust koridoruna taşıyoruz.
+   const b=team==='T'?{x:-40,z:20,yaw:0}:{x:4,z:-40,yaw:Math.PI};
    const slot=p.slot; p.x=b.x+(slot%4-1.5)*1.25;p.z=b.z+(Math.floor(slot/4)%2-.5)*1.25;p.y=GROUND_Y;p.vy=0;p.yaw=b.yaw;p.pitch=0;p.health=100;p.alive=true;p.reloadUntil=0;p.weapon='ak';
  }
  async handle(id,raw){let m;try{m=JSON.parse(raw)}catch{return}const p=this.players.get(id);if(!p)return;

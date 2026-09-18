@@ -469,6 +469,37 @@ export function createDustMap() {
   group.add(floors);
 
   // ---------------------------------------------------
+  // VOID / ALT ZEMİN KORUMASI
+  // ---------------------------------------------------
+  // Video testinde bazı duvar içi boşluklarında sahne arka planı
+  // görünüyordu. Harita zemini yalnızca grid hücrelerine çizildiği
+  // için kamera duvarın kenarına çok yaklaştığında gökyüzü görünüyordu.
+  // Bu alt zemin oynanabilir alanı genişletmez; sadece mevcut haritanın
+  // altında görsel bir "zemin yakalayıcı" olarak çalışır. Asıl hareket
+  // sınırı yine grid + collider sistemi tarafından belirlenir.
+  const underFloorMap = floorSurface.map.clone();
+  const underFloorBump = floorSurface.bumpMap.clone();
+  underFloorMap.wrapS = underFloorMap.wrapT = THREE.RepeatWrapping;
+  underFloorBump.wrapS = underFloorBump.wrapT = THREE.RepeatWrapping;
+  underFloorMap.repeat.set(32, 32);
+  underFloorBump.repeat.set(32, 32);
+  const underFloorMaterial = new THREE.MeshStandardMaterial({
+    map: underFloorMap,
+    bumpMap: underFloorBump,
+    bumpScale: 0.045,
+    roughness: 1
+  });
+  const underFloor = new THREE.Mesh(
+    new THREE.PlaneGeometry(N * TILE, N * TILE),
+    underFloorMaterial
+  );
+  underFloor.rotation.x = -Math.PI / 2;
+  underFloor.position.set(0, -0.34, 0);
+  underFloor.receiveShadow = true;
+  underFloor.renderOrder = -2;
+  group.add(underFloor);
+
+  // ---------------------------------------------------
   // TOPLU DUVAR ÇİZİMİ
   // ---------------------------------------------------
 
