@@ -13,7 +13,7 @@ const randomCode=()=>{const chars='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';let s='';fo
 
 export default {async fetch(request,env){const url=new URL(request.url);if(url.pathname==='/ws'){if(request.headers.get('Upgrade')!=='websocket')return new Response('WebSocket required',{status:426});const id=env.ROOMS.idFromName('GLOBAL');return env.ROOMS.get(id).fetch(request)}return env.ASSETS.fetch(request)}};
 
-export class Room extends DurableObject{
+export class Room{
  constructor(ctx,env){super(ctx,env);this.ctx=ctx;this.env=env;this.players=new Map();this.rooms=new Map();this.timer=null;this.loaded=false}
  async fetch(request){await this.load();const pair=new WebSocketPair();const [client,ws]=Object.values(pair);ws.accept();const p=this.makePlayer(ws);this.players.set(p.id,p);ws.addEventListener('message',e=>this.handle(p.id,e.data));ws.addEventListener('close',()=>this.leave(p.id));this.send(ws,{type:'hello',id:p.id});this.ensureLoop();return new Response(null,{status:101,webSocket:client})}
  async load(){if(this.loaded)return;this.loaded=true;const saved=await this.ctx.storage.get('roomConfigs')||{};for(const [code,config] of Object.entries(saved))this.rooms.set(code,{code,host:null,config,players:new Set(),nextSlot:0,started:true});}
